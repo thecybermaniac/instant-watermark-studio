@@ -38,16 +38,19 @@ export default function Index() {
     setProcessing(true);
     setResult(null);
     try {
-      if (isVideo) {
-        throw new Error("Video processing requires a cloud API (e.g. Cloudinary). Connect your API key to enable this feature.");
+      let blob: Blob;
+      if (mode === "add") {
+        if (isVideo) {
+          throw new Error("Video watermark addition is not yet supported. Use image files for now.");
+        }
+        blob = await addWatermark(file, settings);
+      } else {
+        // Both image and video removal go through Cloudinary
+        blob = await removeWatermark(file);
       }
-      const blob =
-        mode === "add"
-          ? await addWatermark(file, settings)
-          : await removeWatermark(file);
       setResult(URL.createObjectURL(blob));
+      setResultIsVideo(isVideo || false);
       setShowResult(true);
-      // Reset form
       setFile(null);
       setSettings(defaultSettings);
     } catch (err: any) {
