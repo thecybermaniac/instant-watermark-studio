@@ -1,1 +1,4 @@
 project_id = "onohrtjhslrcmzybzwqh"
+
+[functions.remove-watermark]
+verify_jwt = false
