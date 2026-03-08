@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Droplets, Download, Loader2 } from "lucide-react";
 import FileUploader from "@/components/FileUploader";
 import AddWatermarkOptions, { type WatermarkSettings } from "@/components/AddWatermarkOptions";
