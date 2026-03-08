@@ -28,6 +28,12 @@ export async function addWatermark(
   file: File,
   settings: WatermarkSettings
 ): Promise<Blob> {
+  const isVideo = file.type.startsWith("video");
+
+  if (isVideo) {
+    return addVideoWatermark(file, settings);
+  }
+
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = async () => {
@@ -69,6 +75,42 @@ export async function addWatermark(
     img.onerror = () => reject(new Error("Failed to load image"));
     img.src = URL.createObjectURL(file);
   });
+}
+
+async function addVideoWatermark(
+  file: File,
+  settings: WatermarkSettings
+): Promise<Blob> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("watermarkType", settings.type);
+  formData.append("position", settings.position);
+  formData.append("opacity", Math.round(settings.opacity * 100).toString());
+  formData.append("size", settings.size.toString());
+  formData.append("color", settings.color);
+  formData.append("font", settings.font);
+
+  if (settings.type === "text" && settings.text) {
+    formData.append("text", settings.text);
+  } else if (settings.type === "image" && settings.image) {
+    formData.append("watermarkImage", settings.image);
+  }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/add-video-watermark`, {
+    method: "POST",
+    headers: { "apikey": supabaseKey },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: "Processing failed" }));
+    throw new Error(errorData.error || `Processing failed (${response.status})`);
+  }
+
+  return await response.blob();
 }
 
 export async function removeWatermark(file: File): Promise<Blob> {

@@ -41,9 +41,6 @@ export default function Index() {
     try {
       let blob: Blob;
       if (mode === "add") {
-        if (isVideo) {
-          throw new Error("Video watermark addition is not yet supported. Use image files for now.");
-        }
         blob = await addWatermark(file, settings);
       } else {
         // Both image and video removal go through Cloudinary
