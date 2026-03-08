@@ -93,7 +93,7 @@ export default function FileUploader({ file, onFileSelect }: FileUploaderProps) 
         Drop your file here or <span className="text-primary">browse</span>
       </p>
       <p className="text-xs text-muted-foreground mt-1">
-        PNG, JPG, WEBP, MP4, MOV · Max 100MB
+        PNG, JPG, WEBP, MP4, MOV · Max 200MB
       </p>
     </div>
   );
