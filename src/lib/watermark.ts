@@ -1,5 +1,4 @@
 import type { WatermarkSettings } from "@/components/AddWatermarkOptions";
-import { supabase } from "@/integrations/supabase/client";
 
 function getCoords(
   position: string,
@@ -76,7 +75,6 @@ export async function removeWatermark(file: File): Promise<Blob> {
   const formData = new FormData();
   formData.append("file", file);
 
-  // Get the Supabase URL for the edge function
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 

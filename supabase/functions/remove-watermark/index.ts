@@ -6,6 +6,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function createSignature(params: string, apiSecret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(params + apiSecret);
+  const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,32 +34,31 @@ serve(async (req) => {
       throw new Error("No file provided");
     }
 
-    // Step 1: Upload image to Cloudinary
-    const uploadForm = new FormData();
-    uploadForm.append("file", file);
-    uploadForm.append("upload_preset", "ml_default"); // unsigned preset fallback
-    uploadForm.append("api_key", API_KEY);
+    const isVideo = file.type.startsWith("video");
+    const resourceType = isVideo ? "video" : "image";
 
-    // Generate signature for authenticated upload
+    // Step 1: Upload to Cloudinary
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const paramsToSign = `timestamp=${timestamp}`;
+    const signature = await createSignature(paramsToSign, API_SECRET);
 
-    // Create SHA-1 signature
-    const encoder = new TextEncoder();
-    const data = encoder.encode(paramsToSign + API_SECRET);
-    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const signature = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const uploadForm = new FormData();
+    uploadForm.append("file", file);
+    uploadForm.append("api_key", API_KEY);
+    uploadForm.append("timestamp", timestamp);
+    uploadForm.append("signature", signature);
 
-    const authUploadForm = new FormData();
-    authUploadForm.append("file", file);
-    authUploadForm.append("api_key", API_KEY);
-    authUploadForm.append("timestamp", timestamp);
-    authUploadForm.append("signature", signature);
+    // For videos, set eager transformations and use notification_url for async processing
+    if (isVideo) {
+      // Add eager transformation for video watermark removal
+      const eagerParams = "e_gen_remove:prompt_watermark";
+      uploadForm.append("eager", eagerParams);
+      uploadForm.append("eager_async", "false"); // wait for transformation
+    }
 
     const uploadRes = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-      { method: "POST", body: authUploadForm }
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
+      { method: "POST", body: uploadForm }
     );
 
     if (!uploadRes.ok) {
@@ -61,42 +68,43 @@ serve(async (req) => {
 
     const uploadData = await uploadRes.json();
     const publicId = uploadData.public_id;
+    const format = uploadData.format || (isVideo ? "mp4" : "png");
 
-    // Step 2: Generate URL with content-aware fill to remove watermarks
-    // Using Cloudinary's gen_remove effect for AI-powered removal
-    // Fallback: use e_improve + e_sharpen for enhancement-based approach
-    const processedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/e_gen_remove:prompt_watermark/${publicId}.${uploadData.format || "png"}`;
-
-    // Verify the processed URL works
-    const checkRes = await fetch(processedUrl, { method: "HEAD" });
-    
+    // Step 2: Build processed URL
     let finalUrl: string;
-    if (checkRes.ok) {
-      finalUrl = processedUrl;
+
+    if (isVideo) {
+      // Check if eager transformation succeeded
+      if (uploadData.eager && uploadData.eager.length > 0 && uploadData.eager[0].secure_url) {
+        finalUrl = uploadData.eager[0].secure_url;
+      } else {
+        // Fallback: apply video enhancement transformations
+        finalUrl = `https://res.cloudinary.com/${CLOUD_NAME}/video/upload/e_improve,e_sharpen:100/${publicId}.${format}`;
+      }
     } else {
-      // Fallback: use enhance + sharpen transformations
-      finalUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/e_improve,e_sharpen:100/${publicId}.${uploadData.format || "png"}`;
+      // Image: try gen_remove, fallback to enhance
+      const processedUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/e_gen_remove:prompt_watermark/${publicId}.${format}`;
+      const checkRes = await fetch(processedUrl, { method: "HEAD" });
+      finalUrl = checkRes.ok
+        ? processedUrl
+        : `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/e_improve,e_sharpen:100/${publicId}.${format}`;
     }
 
-    // Step 3: Fetch the processed image and return it
-    const imageRes = await fetch(finalUrl);
-    if (!imageRes.ok) {
-      throw new Error(`Failed to fetch processed image [${imageRes.status}]`);
+    // Step 3: Fetch the processed file
+    const mediaRes = await fetch(finalUrl);
+    if (!mediaRes.ok) {
+      throw new Error(`Failed to fetch processed ${resourceType} [${mediaRes.status}]`);
     }
 
-    const imageBlob = await imageRes.blob();
-    const arrayBuffer = await imageBlob.arrayBuffer();
+    const mediaBlob = await mediaRes.blob();
+    const arrayBuffer = await mediaBlob.arrayBuffer();
 
-    // Step 4: Delete the uploaded image from Cloudinary (no permanent storage)
+    // Step 4: Cleanup - delete from Cloudinary
     const deleteTimestamp = Math.floor(Date.now() / 1000).toString();
     const deleteParamsToSign = `public_id=${publicId}&timestamp=${deleteTimestamp}`;
-    const deleteData = encoder.encode(deleteParamsToSign + API_SECRET);
-    const deleteHashBuffer = await crypto.subtle.digest("SHA-1", deleteData);
-    const deleteHashArray = Array.from(new Uint8Array(deleteHashBuffer));
-    const deleteSignature = deleteHashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    const deleteSignature = await createSignature(deleteParamsToSign, API_SECRET);
 
-    // Fire and forget the delete
-    fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/destroy`, {
+    fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/destroy`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -107,15 +115,18 @@ serve(async (req) => {
       }),
     }).catch((e) => console.error("Cleanup failed:", e));
 
+    const contentType = isVideo ? (mediaBlob.type || "video/mp4") : (mediaBlob.type || "image/png");
+    const filename = isVideo ? `processed.${format}` : `processed.${format}`;
+
     return new Response(arrayBuffer, {
       headers: {
         ...corsHeaders,
-        "Content-Type": imageBlob.type || "image/png",
-        "Content-Disposition": `attachment; filename="processed.png"`,
+        "Content-Type": contentType,
+        "Content-Disposition": `attachment; filename="${filename}"`,
       },
     });
   } catch (error: unknown) {
-    console.error("Error processing image:", error);
+    console.error("Error processing media:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

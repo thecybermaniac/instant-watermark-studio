@@ -14,6 +14,7 @@ export default function Index() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [resultIsVideo, setResultIsVideo] = useState(false);
   const defaultSettings: WatermarkSettings = {
     text: "",
     image: null,
@@ -38,16 +39,19 @@ export default function Index() {
     setProcessing(true);
     setResult(null);
     try {
-      if (isVideo) {
-        throw new Error("Video processing requires a cloud API (e.g. Cloudinary). Connect your API key to enable this feature.");
+      let blob: Blob;
+      if (mode === "add") {
+        if (isVideo) {
+          throw new Error("Video watermark addition is not yet supported. Use image files for now.");
+        }
+        blob = await addWatermark(file, settings);
+      } else {
+        // Both image and video removal go through Cloudinary
+        blob = await removeWatermark(file);
       }
-      const blob =
-        mode === "add"
-          ? await addWatermark(file, settings)
-          : await removeWatermark(file);
       setResult(URL.createObjectURL(blob));
+      setResultIsVideo(isVideo || false);
       setShowResult(true);
-      // Reset form
       setFile(null);
       setSettings(defaultSettings);
     } catch (err: any) {
@@ -123,11 +127,15 @@ export default function Index() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Result Preview</DialogTitle>
-            <DialogDescription>Your processed image is ready to download.</DialogDescription>
+            <DialogDescription>Your processed {resultIsVideo ? "video" : "image"} is ready to download.</DialogDescription>
           </DialogHeader>
           {result && (
             <div className="space-y-4">
-              <img src={result} alt="Result" className="rounded-md w-full max-h-[60vh] object-contain bg-muted" />
+              {resultIsVideo ? (
+                <video src={result} controls className="rounded-md w-full max-h-[60vh] bg-muted" />
+              ) : (
+                <img src={result} alt="Result" className="rounded-md w-full max-h-[60vh] object-contain bg-muted" />
+              )}
               <Button variant="outline" className="w-full" onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-2" />
                 Download
