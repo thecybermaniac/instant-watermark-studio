@@ -38,8 +38,7 @@ export async function addWatermark(
       ctx.drawImage(img, 0, 0);
       ctx.globalAlpha = settings.opacity;
 
-      if (settings.image) {
-        // Image watermark
+      if (settings.type === "image" && settings.image) {
         const wmImg = new Image();
         wmImg.onload = () => {
           const ratio = wmImg.width / wmImg.height;
@@ -51,11 +50,10 @@ export async function addWatermark(
         };
         wmImg.onerror = () => reject(new Error("Failed to load watermark image"));
         wmImg.src = URL.createObjectURL(settings.image);
-      } else if (settings.text) {
-        // Text watermark
-        ctx.font = `${settings.size}px sans-serif`;
-        ctx.fillStyle = "rgba(255,255,255,0.9)";
-        ctx.strokeStyle = "rgba(0,0,0,0.5)";
+      } else if (settings.type === "text" && settings.text) {
+        ctx.font = `${settings.size}px ${settings.font}`;
+        ctx.fillStyle = settings.color;
+        ctx.strokeStyle = "rgba(0,0,0,0.4)";
         ctx.lineWidth = 2;
         const metrics = ctx.measureText(settings.text);
         const wmW = metrics.width;
@@ -74,8 +72,6 @@ export async function addWatermark(
 }
 
 export async function removeWatermark(file: File): Promise<Blob> {
-  // Client-side demo: applies a slight blur to simulate removal
-  // For production, integrate Cloudinary AI or an inpainting API
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
@@ -86,7 +82,6 @@ export async function removeWatermark(file: File): Promise<Blob> {
       ctx.filter = "blur(0.5px)";
       ctx.drawImage(img, 0, 0);
       ctx.filter = "none";
-      // Second pass for sharpness
       ctx.globalCompositeOperation = "source-over";
       ctx.globalAlpha = 0.7;
       ctx.drawImage(img, 0, 0);
