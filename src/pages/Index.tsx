@@ -14,6 +14,7 @@ export default function Index() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [resultIsVideo, setResultIsVideo] = useState(false);
   const defaultSettings: WatermarkSettings = {
     text: "",
     image: null,
