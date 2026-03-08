@@ -2,3 +2,6 @@ project_id = "onohrtjhslrcmzybzwqh"
 
 [functions.remove-watermark]
 verify_jwt = false
+
+[functions.add-video-watermark]
+verify_jwt = false
