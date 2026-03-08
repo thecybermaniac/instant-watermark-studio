@@ -23,7 +23,7 @@ export default function FileUploader({ file, onFileSelect }: FileUploaderProps) 
       return;
     }
     if (f.size > MAX_SIZE) {
-      alert("File too large. Maximum size is 100MB.");
+      alert("File too large. Maximum size is 200MB.");
       return;
     }
     onFileSelect(f);
