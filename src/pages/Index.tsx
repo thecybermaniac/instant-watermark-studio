@@ -14,7 +14,7 @@ export default function Index() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
-  const [settings, setSettings] = useState<WatermarkSettings>({
+  const defaultSettings: WatermarkSettings = {
     text: "",
     image: null,
     type: "text",
@@ -23,7 +23,8 @@ export default function Index() {
     size: 48,
     color: "#ffffff",
     font: "sans-serif",
-  });
+  };
+  const [settings, setSettings] = useState<WatermarkSettings>(defaultSettings);
 
   const canProcess =
     file &&
