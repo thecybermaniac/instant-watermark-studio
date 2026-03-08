@@ -75,14 +75,14 @@ export default function Index() {
       </header>
 
       {/* Main - Horizontal Layout */}
-      <main className="flex-1 mx-auto max-w-7xl w-full px-6 py-6 flex gap-6 min-h-0">
+      <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 py-6 flex flex-col md:flex-row gap-6 min-h-0">
         {/* Left: Upload */}
-        <div className="w-1/2 flex flex-col gap-4 min-h-0">
+        <div className="w-full md:w-1/2 flex flex-col gap-4 min-h-0">
           <FileUploader file={file} onFileSelect={(f) => { setFile(f); setResult(null); }} />
         </div>
 
         {/* Right: Options + Process */}
-        <div className="w-1/2 flex flex-col gap-4 min-h-0 overflow-y-auto">
+        <div className="w-full md:w-1/2 flex flex-col gap-4 min-h-0 overflow-y-auto">
           <Tabs value={mode} onValueChange={(v) => { setMode(v as "add" | "remove"); setResult(null); }}>
             <TabsList className="w-full">
               <TabsTrigger value="add" className="flex-1">Add Watermark</TabsTrigger>
