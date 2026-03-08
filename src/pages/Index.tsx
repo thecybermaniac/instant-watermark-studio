@@ -6,12 +6,14 @@ import { Droplets, Download, Loader2 } from "lucide-react";
 import FileUploader from "@/components/FileUploader";
 import AddWatermarkOptions, { type WatermarkSettings } from "@/components/AddWatermarkOptions";
 import RemoveWatermarkOptions from "@/components/RemoveWatermarkOptions";
+import ProcessingProgress, { type ProgressState } from "@/components/ProcessingProgress";
 import { addWatermark, removeWatermark } from "@/lib/watermark";
 
 export default function Index() {
   const [file, setFile] = useState<File | null>(null);
   const [mode, setMode] = useState<"add" | "remove">("add");
   const [processing, setProcessing] = useState(false);
+  const [progress, setProgress] = useState<ProgressState | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [resultIsVideo, setResultIsVideo] = useState(false);
@@ -38,13 +40,13 @@ export default function Index() {
     if (!file) return;
     setProcessing(true);
     setResult(null);
+    setProgress(null);
     try {
       let blob: Blob;
       if (mode === "add") {
-        blob = await addWatermark(file, settings);
+        blob = await addWatermark(file, settings, setProgress);
       } else {
-        // Both image and video removal go through Cloudinary
-        blob = await removeWatermark(file);
+        blob = await removeWatermark(file, setProgress);
       }
       setResult(URL.createObjectURL(blob));
       setResultIsVideo(isVideo || false);
@@ -55,6 +57,7 @@ export default function Index() {
       alert(err.message || "Processing failed");
     } finally {
       setProcessing(false);
+      setProgress(null);
     }
   };
 
@@ -68,7 +71,6 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <header className="border-b border-border bg-card shrink-0">
         <div className="mx-auto max-w-7xl px-6 py-4 flex items-center gap-3">
           <Droplets className="h-7 w-7 text-primary" />
@@ -79,14 +81,11 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Main - Horizontal Layout */}
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 sm:px-6 py-6 flex flex-col md:flex-row gap-6 min-h-0">
-        {/* Left: Upload */}
         <div className="w-full md:w-1/2 flex flex-col gap-4 min-h-0">
           <FileUploader file={file} onFileSelect={(f) => { setFile(f); setResult(null); }} />
         </div>
 
-        {/* Right: Options + Process */}
         <div className="w-full md:w-1/2 flex flex-col gap-4 min-h-0 overflow-y-auto px-1">
           <Tabs value={mode} onValueChange={(v) => { setMode(v as "add" | "remove"); setResult(null); }}>
             <TabsList className="w-full">
@@ -100,6 +99,10 @@ export default function Index() {
               <RemoveWatermarkOptions />
             </TabsContent>
           </Tabs>
+
+          {processing && progress && (
+            <ProcessingProgress progress={progress} />
+          )}
 
           <Button
             className="w-full"
@@ -119,7 +122,6 @@ export default function Index() {
         </div>
       </main>
 
-      {/* Result Dialog */}
       <Dialog open={showResult} onOpenChange={setShowResult}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
