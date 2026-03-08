@@ -6,7 +6,7 @@ const ACCEPTED_TYPES = [
   "image/png", "image/jpeg", "image/webp",
   "video/mp4", "video/quicktime",
 ];
-const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_SIZE = 200 * 1024 * 1024; // 200MB
 
 interface FileUploaderProps {
   file: File | null;
