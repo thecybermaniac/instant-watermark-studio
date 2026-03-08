@@ -1,4 +1,5 @@
 import type { WatermarkSettings } from "@/components/AddWatermarkOptions";
+import type { ProgressState } from "@/components/ProcessingProgress";
 
 function getCoords(
   position: string,
@@ -24,16 +25,76 @@ function getCoords(
   }
 }
 
+type OnProgress = (state: ProgressState) => void;
+
+function uploadWithProgress(
+  url: string,
+  formData: FormData,
+  headers: Record<string, string>,
+  onProgress?: OnProgress
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress({ stage: "uploading", percent: Math.round((e.loaded / e.total) * 100) });
+      }
+    });
+
+    xhr.upload.addEventListener("load", () => {
+      onProgress?.({ stage: "processing", percent: 0 });
+    });
+
+    xhr.addEventListener("progress", (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress({ stage: "downloading", percent: Math.round((e.loaded / e.total) * 100) });
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(xhr.response as Blob);
+      } else {
+        // Try to parse error from response
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const err = JSON.parse(reader.result as string);
+            reject(new Error(err.error || `Processing failed (${xhr.status})`));
+          } catch {
+            reject(new Error(`Processing failed (${xhr.status})`));
+          }
+        };
+        reader.onerror = () => reject(new Error(`Processing failed (${xhr.status})`));
+        reader.readAsText(xhr.response as Blob);
+      }
+    });
+
+    xhr.addEventListener("error", () => reject(new Error("Network error")));
+    xhr.addEventListener("abort", () => reject(new Error("Upload cancelled")));
+
+    xhr.open("POST", url);
+    xhr.responseType = "blob";
+    for (const [k, v] of Object.entries(headers)) {
+      xhr.setRequestHeader(k, v);
+    }
+    xhr.send(formData);
+  });
+}
+
 export async function addWatermark(
   file: File,
-  settings: WatermarkSettings
+  settings: WatermarkSettings,
+  onProgress?: OnProgress
 ): Promise<Blob> {
   const isVideo = file.type.startsWith("video");
 
   if (isVideo) {
-    return addVideoWatermark(file, settings);
+    return addVideoWatermark(file, settings, onProgress);
   }
 
+  // Image processing is instant, no progress needed
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = async () => {
@@ -79,7 +140,8 @@ export async function addWatermark(
 
 async function addVideoWatermark(
   file: File,
-  settings: WatermarkSettings
+  settings: WatermarkSettings,
+  onProgress?: OnProgress
 ): Promise<Blob> {
   const formData = new FormData();
   formData.append("file", file);
@@ -99,39 +161,32 @@ async function addVideoWatermark(
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  const response = await fetch(`${supabaseUrl}/functions/v1/add-video-watermark`, {
-    method: "POST",
-    headers: { "apikey": supabaseKey },
-    body: formData,
-  });
+  onProgress?.({ stage: "uploading", percent: 0 });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: "Processing failed" }));
-    throw new Error(errorData.error || `Processing failed (${response.status})`);
-  }
-
-  return await response.blob();
+  return uploadWithProgress(
+    `${supabaseUrl}/functions/v1/add-video-watermark`,
+    formData,
+    { apikey: supabaseKey },
+    onProgress
+  );
 }
 
-export async function removeWatermark(file: File): Promise<Blob> {
+export async function removeWatermark(
+  file: File,
+  onProgress?: OnProgress
+): Promise<Blob> {
   const formData = new FormData();
   formData.append("file", file);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  const response = await fetch(`${supabaseUrl}/functions/v1/remove-watermark`, {
-    method: "POST",
-    headers: {
-      "apikey": supabaseKey,
-    },
-    body: formData,
-  });
+  onProgress?.({ stage: "uploading", percent: 0 });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ error: "Processing failed" }));
-    throw new Error(errorData.error || `Processing failed (${response.status})`);
-  }
-
-  return await response.blob();
+  return uploadWithProgress(
+    `${supabaseUrl}/functions/v1/remove-watermark`,
+    formData,
+    { apikey: supabaseKey },
+    onProgress
+  );
 }
