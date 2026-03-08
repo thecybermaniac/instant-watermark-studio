@@ -82,7 +82,7 @@ export default function Index() {
         </div>
 
         {/* Right: Options + Process */}
-        <div className="w-full md:w-1/2 flex flex-col gap-4 min-h-0 overflow-y-auto">
+        <div className="w-full md:w-1/2 flex flex-col gap-4 min-h-0 overflow-y-auto px-1">
           <Tabs value={mode} onValueChange={(v) => { setMode(v as "add" | "remove"); setResult(null); }}>
             <TabsList className="w-full">
               <TabsTrigger value="add" className="flex-1">Add Watermark</TabsTrigger>
