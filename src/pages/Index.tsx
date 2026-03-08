@@ -123,6 +123,7 @@ export default function Index() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Result Preview</DialogTitle>
+            <DialogDescription>Your processed image is ready to download.</DialogDescription>
           </DialogHeader>
           {result && (
             <div className="space-y-4">
