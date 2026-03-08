@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Droplets, Download, Loader2 } from "lucide-react";
 import FileUploader from "@/components/FileUploader";
 import AddWatermarkOptions, { type WatermarkSettings } from "@/components/AddWatermarkOptions";
@@ -14,7 +14,7 @@ export default function Index() {
   const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
-  const [settings, setSettings] = useState<WatermarkSettings>({
+  const defaultSettings: WatermarkSettings = {
     text: "",
     image: null,
     type: "text",
@@ -23,7 +23,8 @@ export default function Index() {
     size: 48,
     color: "#ffffff",
     font: "sans-serif",
-  });
+  };
+  const [settings, setSettings] = useState<WatermarkSettings>(defaultSettings);
 
   const canProcess =
     file &&
@@ -46,6 +47,9 @@ export default function Index() {
           : await removeWatermark(file);
       setResult(URL.createObjectURL(blob));
       setShowResult(true);
+      // Reset form
+      setFile(null);
+      setSettings(defaultSettings);
     } catch (err: any) {
       alert(err.message || "Processing failed");
     } finally {
@@ -119,6 +123,7 @@ export default function Index() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Result Preview</DialogTitle>
+            <DialogDescription>Your processed image is ready to download.</DialogDescription>
           </DialogHeader>
           {result && (
             <div className="space-y-4">
