@@ -127,11 +127,15 @@ export default function Index() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Result Preview</DialogTitle>
-            <DialogDescription>Your processed image is ready to download.</DialogDescription>
+            <DialogDescription>Your processed {resultIsVideo ? "video" : "image"} is ready to download.</DialogDescription>
           </DialogHeader>
           {result && (
             <div className="space-y-4">
-              <img src={result} alt="Result" className="rounded-md w-full max-h-[60vh] object-contain bg-muted" />
+              {resultIsVideo ? (
+                <video src={result} controls className="rounded-md w-full max-h-[60vh] bg-muted" />
+              ) : (
+                <img src={result} alt="Result" className="rounded-md w-full max-h-[60vh] object-contain bg-muted" />
+              )}
               <Button variant="outline" className="w-full" onClick={handleDownload}>
                 <Download className="h-4 w-4 mr-2" />
                 Download
