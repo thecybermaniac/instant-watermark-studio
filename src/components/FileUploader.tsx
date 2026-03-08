@@ -6,7 +6,7 @@ const ACCEPTED_TYPES = [
   "image/png", "image/jpeg", "image/webp",
   "video/mp4", "video/quicktime",
 ];
-const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+const MAX_SIZE = 200 * 1024 * 1024; // 200MB
 
 interface FileUploaderProps {
   file: File | null;
@@ -23,7 +23,7 @@ export default function FileUploader({ file, onFileSelect }: FileUploaderProps) 
       return;
     }
     if (f.size > MAX_SIZE) {
-      alert("File too large. Maximum size is 100MB.");
+      alert("File too large. Maximum size is 200MB.");
       return;
     }
     onFileSelect(f);
@@ -93,7 +93,7 @@ export default function FileUploader({ file, onFileSelect }: FileUploaderProps) 
         Drop your file here or <span className="text-primary">browse</span>
       </p>
       <p className="text-xs text-muted-foreground mt-1">
-        PNG, JPG, WEBP, MP4, MOV · Max 100MB
+        PNG, JPG, WEBP, MP4, MOV · Max 200MB
       </p>
     </div>
   );
