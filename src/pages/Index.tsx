@@ -47,6 +47,9 @@ export default function Index() {
           : await removeWatermark(file);
       setResult(URL.createObjectURL(blob));
       setShowResult(true);
+      // Reset form
+      setFile(null);
+      setSettings(defaultSettings);
     } catch (err: any) {
       alert(err.message || "Processing failed");
     } finally {
