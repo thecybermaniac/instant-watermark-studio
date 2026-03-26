@@ -27,14 +27,14 @@ Make sure you have the following installed on your machine:
 **Cloning the Repository**
 
 ```bash
-git clone https://github.com/thecybermaniac/patiens.git
-cd patiens
+git clone https://github.com/thecybermaniac/instant-watermark-studio.git
+cd instant-watermark-studio
 ```
 
 **Installation**
 
 ```bash
-npm install
+pnpm install
 ```
 
 **Setup Environment Variables**
