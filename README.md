@@ -1,73 +1,58 @@
-# Welcome to your Lovable project
+## Instant Watermark Studio
 
-## Project info
+AI tool that lets you either add or remove watermarks from images. Live preview [here](https://patiens.vercel.app)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+![Instant Watermark Studio](/src/assets/thumbnail.png)
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+-   [x] Add watermark to images
+-   [x] Remove watermark from images
+-   [x] Download modified images
+-   [x] Customize watermark
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Follow these steps to set up the project locally on your machine.
 
-Changes made via Lovable will be committed automatically to this repo.
+Prerequisites
 
-**Use your preferred IDE**
+Make sure you have the following installed on your machine:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/en)
+- [npm](https://www.npmjs.com/) (Node Package Manager)
+- [pnpm](https://pnpm.io//) 
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+**Cloning the Repository**
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+git clone https://github.com/thecybermaniac/patiens.git
+cd patiens
 ```
 
-**Edit a file directly in GitHub**
+**Installation**
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm install
+```
 
-**Use GitHub Codespaces**
+**Setup Environment Variables**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+This application was built with [Supabase](https://supabase.com) and to make sure it works properly, you need to register and create a project on Supabase to get the necessary keys. Then, create a new file named `.env` in the root of your project and add the following content:
 
-## What technologies are used for this project?
+```ini
+VITE_SUPABASE_PROJECT_ID=YOUR_SUPABASE_PROJECT_ID
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+VITE_SUPABASE_URL=YOUR_SUPABASE_PROJECT_URL
+```
 
-This project is built with:
+Replace the placeholder values with your actual Appwrite credentials.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+**Running the Project**
 
-## How can I deploy this project?
+```bash
+pnpm run dev
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Open [http://localhost:8000](http://localhost:8000) in your browser to view the project.
