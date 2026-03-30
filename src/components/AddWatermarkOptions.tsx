@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export interface WatermarkSettings {
   text: string;
   image: File | null;
-  type: "text" | "image";
+  type: "text" | "image" | null;
   position: string;
   opacity: number;
   size: number;
